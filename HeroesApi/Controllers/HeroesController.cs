@@ -43,6 +43,43 @@ public class HeroesController : ControllerBase
         });
     }
 
+    [HttpGet("serialize")]
+    public IActionResult GetSerialize()
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
+        var hero = new Hero
+        {
+            Id = 5,
+            Name = "Тор",
+            RealName = "Тор Одинсон",
+            Universe = Universe.Marvel,
+            PowerLevel = 98,
+            Powers = ["молния", "сила", "полёт"],
+            Weapon = new Weapon
+            {
+                Name = "Мьёльнир",
+                IsRanged = false
+            },
+            InternalNotes = "Служебное поле не должно попасть в JSON"
+        };
+
+        var serialized = JsonSerializer.Serialize(hero, options);
+        var deserialized = JsonSerializer.Deserialize<Hero>(serialized, options);
+
+        return Ok(new
+        {
+            serializedJson = serialized,
+            deserializedObject = deserialized,
+            internalNotesAfterDeserialize = deserialized?.InternalNotes
+        });
+    }
+
     [HttpGet("{id:int}")]
     public ActionResult<Hero> GetById(int id)
     {
