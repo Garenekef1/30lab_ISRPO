@@ -11,9 +11,17 @@ namespace HeroesApi.Controllers;
 public class HeroesController : ControllerBase
 {
     [HttpGet]
-    public ActionResult<List<Hero>> GetAll()
+    public ActionResult<List<Hero>> GetAll([FromQuery] string? universe = null)
     {
-        return Ok(HeroesStore.Heroes);
+        var heroes = HeroesStore.Heroes.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(universe))
+        {
+            heroes = heroes.Where(hero =>
+                hero.Universe.ToString().Equals(universe, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return Ok(heroes.ToList());
     }
 
     [HttpGet("demo")]
@@ -78,6 +86,21 @@ public class HeroesController : ControllerBase
             deserializedObject = deserialized,
             internalNotesAfterDeserialize = deserialized?.InternalNotes
         });
+    }
+
+    [HttpGet("search")]
+    public ActionResult<List<Hero>> Search([FromQuery] string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return BadRequest(new { message = "Параметр name обязателен" });
+        }
+
+        var result = HeroesStore.Heroes
+            .Where(hero => hero.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return Ok(result);
     }
 
     [HttpGet("{id:int}")]
